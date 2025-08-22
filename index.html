@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Appointment</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #604575;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #097a9d;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      color: #34495e;
+      font-weight: 500;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      transition: 0.3s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #3498db;
+    }
+    button {
+      margin-top: 18px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background: #3498db;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .success {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      background: #2ecc71;
+      color: white;
+      border-radius: 6px;
+    }
+    .error {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      background: #e74c3c;
+      color: white;
+      border-radius: 6px;
+    }
+    /* Phone input with +91 prefix */
+    .phone-group {
+      display: flex;
+      align-items: center;
+    }
+    .phone-prefix {
+      background: #eee;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      font-size: 15px;
+      color: #2c3e50;
+    }
+    .phone-input {
+      border-radius: 0 8px 8px 0;
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Book Doctor Appointment</h2>
+    <form id="appointmentForm">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" required placeholder="Enter your name">
+
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" required placeholder="Enter your email">
+
+      <label for="phone">Phone Number</label>
+      <div class="phone-group">
+        <span class="phone-prefix">+91</span>
+        <input type="tel" id="phone" name="phone" 
+               class="phone-input"
+               required placeholder="Enter your phone number"
+               pattern="[6-9][0-9]{9}">
+      </div>
+
+      <label for="date">Preferred Date</label>
+      <input type="date" id="date" name="date" required>
+
+      <label for="time">Preferred Time</label>
+      <select id="time" name="time" required>
+        <option value="">-- Select Time --</option>
+        <option value="09:00">09:00 AM</option>
+        <option value="10:00">10:00 AM</option>
+        <option value="11:00">11:00 AM</option>
+        <option value="12:00">12:00 PM</option>
+        <option value="13:00">01:00 PM</option>
+        <option value="15:00">03:00 PM</option>
+        <option value="16:00">04:00 PM</option>
+      </select>
+
+      <label for="doctor">Select Doctor</label>
+      <select id="doctor" name="doctor" required>
+        <option value="">-- Choose Doctor --</option>
+        <option value="dr_smith">Dr. jay chaudhary (Cardiologist)</option>
+        <option value="dr_emma">Dr. mihir chaudhary (Dermatologist)</option>
+        <option value="dr_rahul">Dr. Rahul Mehta (General Physician)</option>
+      </select>
+
+      <label for="message">Additional Notes</label>
+      <textarea id="message" name="message" rows="3" placeholder="Write any health concerns..."></textarea>
+
+      <button type="submit">Confirm Appointment</button>
+    </form>
+    <div class="success" id="successMsg">
+       Appointment request submitted successfully!
+    </div>
+    <div class="error" id="errorMsg">
+       Please enter a valid 10-digit Indian mobile number.
+    </div>
+  </div>
+
+  <script>
+    // Restrict date to only within 1 month
+    const dateInput = document.getElementById("date");
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setMonth(today.getMonth() + 1);
+
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    dateInput.min = formatDate(today);
+    dateInput.max = formatDate(maxDate);
+
+    // Form validation
+    document.getElementById("appointmentForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const phone = document.getElementById("phone").value;
+      const phonePattern = /^[6-9][0-9]{9}$/;
+
+      if (!phonePattern.test(phone)) {
+        document.getElementById("errorMsg").style.display = "block";
+        document.getElementById("successMsg").style.display = "none";
+        return;
+      }
+
+      document.getElementById("errorMsg").style.display = "none";
+      document.getElementById("successMsg").style.display = "block";
+      this.reset();
+    });
+  </script>
+</body>
+</html>
