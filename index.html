@@ -21,16 +21,15 @@
       padding: 25px;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      color: #fff;
     }
     h2 {
       text-align: center;
-      color: #2c3e50;
       margin-bottom: 20px;
     }
     label {
       display: block;
       margin: 12px 0 6px;
-      color: #34495e;
       font-weight: 500;
     }
     input, select, textarea {
@@ -61,23 +60,20 @@
     button:hover {
       background: #2980b9;
     }
-    .success {
+    .success, .error {
       display: none;
       text-align: center;
       margin-top: 15px;
       padding: 10px;
-      background: #2ecc71;
-      color: white;
       border-radius: 6px;
     }
+    .success {
+      background: #2ecc71;
+      color: white;
+    }
     .error {
-      display: none;
-      text-align: center;
-      margin-top: 15px;
-      padding: 10px;
       background: #e74c3c;
       color: white;
-      border-radius: 6px;
     }
     /* Phone input with +91 prefix */
     .phone-group {
@@ -103,12 +99,8 @@
   <div class="container">
     <h2>Book Doctor Appointment</h2>
     <form id="appointmentForm">
-      <label for="name">Full Name</label>
-      <input type="text" id="name" name="name" required placeholder="Enter your name">
 
-      <label for="email">Email Address</label>
-      <input type="email" id="email" name="email" required placeholder="Enter your email">
-
+      <!-- 1. Phone Number -->
       <label for="phone">Phone Number</label>
       <div class="phone-group">
         <span class="phone-prefix">+91</span>
@@ -118,10 +110,34 @@
                pattern="[6-9][0-9]{9}">
       </div>
 
-      <label for="date">Preferred Date</label>
+      <!-- 2. Full Name -->
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" required placeholder="Enter your name">
+
+      <!-- 3. Email Address -->
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" required placeholder="Enter your email">
+
+      <!-- 4. Date of Birth -->
+      <label for="dob">Date of Birth</label>
+      <input type="date" id="dob" name="dob" required>
+
+      <!-- 5. Select Doctor -->
+      <label for="doctor">Select Doctor</label>
+      <select id="doctor" name="doctor" required>
+        <option value="">-- Choose Doctor --</option>
+        <option value="dr_jay">Dr. Jay Chaudhary (Cardiologist)</option>
+        <option value="dr_mihir">Dr. Mihir Chaudhary (Dermatologist)</option>
+        <option value="dr_rahul">Dr. Rahul Mehta (General Physician)</option>
+        <option value="dr_mitesh">Dr. Mitesh Patel (Under 14 children)</option>
+      </select>
+
+      <!-- 6. Appointment Date -->
+      <label for="date">Appointment Date</label>
       <input type="date" id="date" name="date" required>
 
-      <label for="time">Preferred Time</label>
+      <!-- 7. Time Slot -->
+      <label for="time">Time Slot</label>
       <select id="time" name="time" required>
         <option value="">-- Select Time --</option>
         <option value="09:00">09:00 AM</option>
@@ -133,19 +149,13 @@
         <option value="16:00">04:00 PM</option>
       </select>
 
-      <label for="doctor">Select Doctor</label>
-      <select id="doctor" name="doctor" required>
-        <option value="">-- Choose Doctor --</option>
-        <option value="dr_smith">Dr. jay chaudhary (Cardiologist)</option>
-        <option value="dr_emma">Dr. mihir chaudhary (Dermatologist)</option>
-        <option value="dr_rahul">Dr. Rahul Mehta (General Physician)</option>
-      </select>
-
-      <label for="message">Additional Notes</label>
-      <textarea id="message" name="message" rows="3" placeholder="Write any health concerns..."></textarea>
+      <!-- 8. Note -->
+      <label for="note">Note</label>
+      <textarea id="note" name="note" rows="3" placeholder="Write any health concerns..."></textarea>
 
       <button type="submit">Confirm Appointment</button>
     </form>
+
     <div class="success" id="successMsg">
        Appointment request submitted successfully!
     </div>
@@ -155,33 +165,94 @@
   </div>
 
   <script>
-    // Restrict date to only within 1 month
-    const dateInput = document.getElementById("date");
-    const today = new Date();
-    const maxDate = new Date();
-    maxDate.setMonth(today.getMonth() + 1);
+  // Restrict date to within 1 month
+  const dateInput = document.getElementById("date");
+  const today = new Date();
+  const maxDate = new Date();
+  maxDate.setMonth(today.getMonth() + 1);
 
-    const formatDate = (d) => d.toISOString().split("T")[0];
-    dateInput.min = formatDate(today);
-    dateInput.max = formatDate(maxDate);
+  const formatDate = (d) => d.toISOString().split("T")[0];
+  dateInput.min = formatDate(today);
+  dateInput.max = formatDate(maxDate);
 
-    // Form validation
-    document.getElementById("appointmentForm").addEventListener("submit", function(e) {
-      e.preventDefault();
+  // Store booked appointments
+  let bookedAppointments = [];
 
-      const phone = document.getElementById("phone").value;
-      const phonePattern = /^[6-9][0-9]{9}$/;
+  const doctorInput = document.getElementById("doctor");
+  const timeSelect = document.getElementById("time");
 
-      if (!phonePattern.test(phone)) {
-        document.getElementById("errorMsg").style.display = "block";
-        document.getElementById("successMsg").style.display = "none";
-        return;
+  // Function to refresh available time slots
+  function updateTimeSlots() {
+    const doctor = doctorInput.value;
+    const date = dateInput.value;
+
+    // reset all slots first
+    for (let option of timeSelect.options) {
+      if (option.value !== "") {
+        option.disabled = false;
+        option.textContent = option.getAttribute("data-label") || option.textContent;
       }
+    }
 
-      document.getElementById("errorMsg").style.display = "none";
-      document.getElementById("successMsg").style.display = "block";
-      this.reset();
+    // disable already booked slots
+    bookedAppointments.forEach(app => {
+      if (app.doctor === doctor && app.date === date) {
+        const bookedOption = timeSelect.querySelector(`option[value="${app.time}"]`);
+        if (bookedOption) {
+          bookedOption.disabled = true;
+          bookedOption.textContent = bookedOption.textContent + " (Booked)";
+        }
+      }
     });
-  </script>
+  }
+
+  // Store original labels of time options
+  for (let option of timeSelect.options) {
+    if (option.value !== "") {
+      option.setAttribute("data-label", option.textContent);
+    }
+  }
+
+  doctorInput.addEventListener("change", updateTimeSlots);
+  dateInput.addEventListener("change", updateTimeSlots);
+
+  // Validation + prevent duplicate booking
+  document.getElementById("appointmentForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const phone = document.getElementById("phone").value;
+    const phonePattern = /^[6-9][0-9]{9}$/;
+    const doctor = doctorInput.value;
+    const date = dateInput.value;
+    const time = timeSelect.value;
+
+    if (!phonePattern.test(phone)) {
+      alert(" Please enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+
+    // Check if already booked
+    const isBooked = bookedAppointments.some(app => 
+      app.doctor === doctor && app.date === date && app.time === time
+    );
+
+    if (isBooked) {
+      alert("This time slot is already booked for the selected doctor. Please choose another one.");
+      return;
+    }
+
+    // Save booking
+    bookedAppointments.push({ doctor, date, time });
+
+    //  Popup confirmation
+    alert(` Appointment Confirmed!\n\nDoctor: ${doctor}\nDate: ${date}\nTime: ${time}`);
+
+    // Refresh slots so this one shows as booked
+    updateTimeSlots();
+
+    this.reset();
+  });
+</script>
+
 </body>
 </html>
